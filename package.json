@@ -1,18 +1,39 @@
 {
-  "name": "server",
+  "name": "feedback-form",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Full-stack Feedback Form application connected to MongoDB with Node.js and Express",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "server": "node server.js",
+    "dev:server": "nodemon server.js",
+    "client": "vite",
+    "dev:client": "vite",
+    "build": "vite build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "feedback-form",
+    "mongodb",
+    "mongoose",
+    "express",
+    "nodejs",
+    "react",
+    "fullstack"
+  ],
+  "author": "Rahul",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "body-parser": "^2.3.0",
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "mongoose": "^8.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "nodemon": "^3.1.7",
+    "vite": "^6.0.1"
   }
 }
