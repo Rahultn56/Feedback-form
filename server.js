@@ -18,16 +18,38 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ==========================================
-// 2. MongoDB Database Connection
+// 2. MongoDB Database Connection with Auto-Fallback
 // ==========================================
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
+async function connectDB() {
+  // Try configured URI (e.g. MongoDB Atlas or local)
+  const targetUri = process.env.MONGODB_URI || MONGODB_URI;
+  try {
+    console.log(`📡 Connecting to MongoDB at: ${targetUri.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@")}`);
+    await mongoose.connect(targetUri, {
+      serverSelectionTimeoutMS: 2500, // fast timeout if local daemon isn't running
+    });
     console.log("✅ Successfully connected to MongoDB database!");
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-  });
+    return;
+  } catch (err) {
+    console.warn(`⚠️ Could not connect to ${targetUri} (${err.message})`);
+  }
+
+  // Automatic Fallback to In-Memory MongoDB
+  console.log("🔄 Starting In-Memory MongoDB fallback server...");
+  try {
+    const { MongoMemoryServer } = require("mongodb-memory-server");
+    const mongod = await MongoMemoryServer.create();
+    const memoryUri = mongod.getUri();
+    await mongoose.connect(memoryUri);
+    console.log("✅ Connected successfully to In-Memory MongoDB server!");
+    console.log(`📦 In-Memory MongoDB URI: ${memoryUri}`);
+  } catch (memErr) {
+    console.error("❌ MongoDB connection error:", memErr.message);
+    console.log("👉 Tip: To connect to MongoDB Atlas Cloud, add your MONGODB_URI to .env");
+  }
+}
+
+connectDB();
 
 // ==========================================
 // 3. Mongoose Feedback Schema & Model
@@ -76,10 +98,13 @@ const Feedback = mongoose.model("Feedback", feedbackSchema);
 
 // Health Check Route
 app.get("/api/health", (req, res) => {
+  const isConnected = mongoose.connection.readyState === 1;
   res.json({
     status: "online",
     message: "Feedback API Server is running",
-    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+    database: isConnected ? "Connected" : "Connecting/Disconnected",
+    databaseHost: mongoose.connection.host || "unknown",
+    databaseName: mongoose.connection.name || "feedback_db",
   });
 });
 
@@ -158,5 +183,5 @@ app.delete("/api/feedback/:id", async (req, res) => {
 // ==========================================
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`📡 MongoDB Target: ${MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@")}`);
+  console.log(`👉 Open http://localhost:${PORT} in your browser to test the Feedback Form!`);
 });
