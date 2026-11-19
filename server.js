@@ -181,7 +181,10 @@ app.delete("/api/feedback/:id", async (req, res) => {
 // ==========================================
 // 5. Start Server
 // ==========================================
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`👉 Open http://localhost:${PORT} in your browser to test the Feedback Form!`);
-});
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
